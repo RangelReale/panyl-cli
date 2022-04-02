@@ -34,7 +34,7 @@ func main() {
 				Enabled: false,
 			},
 		}),
-		panylcli.WithProcessorlProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
+		panylcli.WithProcessorProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
 			parseflags := struct {
 				Application string `flag:"application"`
 				StartLine   int    `flag:"start-line"`
