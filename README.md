@@ -39,7 +39,9 @@ import (
     "github.com/RangelReale/panyl"
     panylcli "github.com/RangelReale/panyl-cli"
     "github.com/RangelReale/panyl/plugins/clean"
+    "github.com/RangelReale/panyl/plugins/consolidate"
     "github.com/RangelReale/panyl/plugins/metadata"
+    "github.com/RangelReale/panyl/plugins/structure"
     "github.com/spf13/pflag"
 )
 
@@ -56,8 +58,12 @@ func main() {
                 Enabled: true,
             },
             panylcli.PluginOption{
-                Name:    "dockercompose",
+                Name:    "json",
                 Enabled: true,
+            },
+            panylcli.PluginOption{
+                Name:    "consolidate-lines",
+                Enabled: false,
             },
         }),
         panylcli.WithProcessorlProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
@@ -74,8 +80,8 @@ func main() {
 
             ret := panyl.NewProcessor(panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount))
             if preset != "" {
-                if preset == "all" {
-                    pluginsEnabled = []string{"ansiescape", "dockercompose"}
+                if preset == "default" {
+                    pluginsEnabled = []string{"ansiescape", "json"}
                 } else {
                     return nil, fmt.Errorf("Preset '%s' not supported", preset)
                 }
@@ -89,8 +95,10 @@ func main() {
                 switch plugin {
                 case "ansiescape":
                     ret.RegisterPlugin(&clean.AnsiEscape{})
-                case "dockercompose":
-                    ret.RegisterPlugin(&metadata.DockerCompose{})
+                case "json":
+                    ret.RegisterPlugin(&structure.JSON{})
+                case "consolidate-lines":
+                    ret.RegisterPlugin(&consolidate.JoinAllLines{})
                 }
             }
 
@@ -103,7 +111,7 @@ func main() {
 
     err := cmd.Execute()
     if err != nil {
-        fmt.Println(err.Error())
+        fmt.Fprintln(os.Stderr, err.Error())
         os.Exit(1)
     }
 }
