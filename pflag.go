@@ -31,10 +31,34 @@ func ParseFlags(flags *pflag.FlagSet, out interface{}) error {
 			var err error
 
 			switch field.Type.Kind() {
-			case reflect.String:
-				value, err = flags.GetString(tag)
+			case reflect.Bool:
+				value, err = flags.GetBool(tag)
 			case reflect.Int:
 				value, err = flags.GetInt(tag)
+			case reflect.Int8:
+				value, err = flags.GetInt8(tag)
+			case reflect.Int16:
+				value, err = flags.GetInt16(tag)
+			case reflect.Int32:
+				value, err = flags.GetInt32(tag)
+			case reflect.Int64:
+				value, err = flags.GetInt64(tag)
+			case reflect.Uint:
+				value, err = flags.GetUint(tag)
+			case reflect.Uint8:
+				value, err = flags.GetUint8(tag)
+			case reflect.Uint16:
+				value, err = flags.GetUint16(tag)
+			case reflect.Uint32:
+				value, err = flags.GetUint32(tag)
+			case reflect.Uint64:
+				value, err = flags.GetUint64(tag)
+			case reflect.Float32:
+				value, err = flags.GetFloat32(tag)
+			case reflect.Float64:
+				value, err = flags.GetFloat64(tag)
+			case reflect.String:
+				value, err = flags.GetString(tag)
 			default:
 				err = fmt.Errorf("unsupported flag type '%s'", field.Type.Name())
 			}
