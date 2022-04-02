@@ -6,12 +6,12 @@ import (
 )
 
 type options struct {
-	globalFlags    FlagsProvider
-	presetFlags    FlagsProvider
-	logFlags       FlagsProvider
-	pluginOptions  []PluginOption
-	panylProvider  PanylProviderFunc
-	resultProvider ResultProviderFunc
+	globalFlags       FlagsProvider
+	presetFlags       FlagsProvider
+	logFlags          FlagsProvider
+	pluginOptions     []PluginOption
+	processorProvider ProcessorProviderFunc
+	resultProvider    ResultProviderFunc
 }
 
 type Option func(*options)
@@ -47,11 +47,11 @@ func WithPluginOptions(pluginOptions []PluginOption) Option {
 	}
 }
 
-type PanylProviderFunc func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error)
+type ProcessorProviderFunc func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error)
 
-func WithPanylProvider(f PanylProviderFunc) Option {
+func WithProcessorlProvider(f ProcessorProviderFunc) Option {
 	return func(o *options) {
-		o.panylProvider = f
+		o.processorProvider = f
 	}
 }
 

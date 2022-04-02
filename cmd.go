@@ -53,10 +53,10 @@ func New(opt ...Option) *Cmd {
 		Aliases: []string{"p"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.panylProvider == nil {
+			if opts.processorProvider == nil {
 				return errors.New("Panyl provider was not set")
 			}
-			processor, err := opts.panylProvider(args[0], nil, cmd.Flags())
+			processor, err := opts.processorProvider(args[0], nil, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -70,7 +70,7 @@ func New(opt ...Option) *Cmd {
 		Aliases: []string{"l"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.panylProvider == nil {
+			if opts.processorProvider == nil {
 				return errors.New("Panyl provider was not set")
 			}
 			var pluginsEnabled []string
@@ -84,7 +84,7 @@ func New(opt ...Option) *Cmd {
 				}
 			}
 
-			processor, err := opts.panylProvider("", pluginsEnabled, cmd.Flags())
+			processor, err := opts.processorProvider("", pluginsEnabled, cmd.Flags())
 			if err != nil {
 				return err
 			}
