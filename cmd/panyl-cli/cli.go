@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/RangelReale/panyl"
-	panylcli "github.com/RangelReale/panyl-cli-poc1"
+	panylcli "github.com/RangelReale/panyl-cli"
 	"github.com/RangelReale/panyl/plugins/clean"
 	"github.com/RangelReale/panyl/plugins/metadata"
 	"github.com/spf13/pflag"
