@@ -37,8 +37,10 @@ func WithDeclareLogFlags(f FlagsProvider) Option {
 }
 
 type PluginOption struct {
-	Name    string
-	Enabled bool
+	Name          string
+	Enabled       bool
+	Preset        bool
+	PresetEnabled bool
 }
 
 func WithPluginOptions(pluginOptions []PluginOption) Option {
