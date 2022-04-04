@@ -1,5 +1,5 @@
-github.com/RangelReale/panyl v0.5.6 h1:H9ePqojAxPW5e+2rue0YImzBGQpcis7gDAwrBYJr36A=
-github.com/RangelReale/panyl v0.5.6/go.mod h1:o+Hj39ZjTNe3VX2sKTObIxqUutqV82BK83tdDEbe8AQ=
+github.com/RangelReale/panyl v0.5.8 h1:zpc67UWUGzSaIu1mseD/wNjThhNw/r63FnqL2J8qheI=
+github.com/RangelReale/panyl v0.5.8/go.mod h1:quQN903AHM+gIRhN+FQddihjSk3VB+RJ9lgDJIR6UK8=
 github.com/cpuguy83/go-md2man/v2 v2.0.1/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/imdario/mergo v0.3.12 h1:b6R2BslTbIEToALKP7LxUvijTsNI9TAe80pLWN2g/HU=
 github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH0dnCYA=
