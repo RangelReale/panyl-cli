@@ -53,20 +53,22 @@ func main() {
             flags.IntP("line-amount", "m", 0, "amount of lines to process (0 = all)")
         }),
         panylcli.WithPluginOptions([]panylcli.PluginOption{
-            panylcli.PluginOption{
-                Name:    "ansiescape",
-                Enabled: true,
+            {
+                Name:          "ansiescape",
+                Enabled:       true,
+                Preset:        true,
+                PresetEnabled: true,
             },
-            panylcli.PluginOption{
+            {
                 Name:    "json",
                 Enabled: true,
             },
-            panylcli.PluginOption{
+            {
                 Name:    "consolidate-lines",
                 Enabled: false,
             },
         }),
-        panylcli.WithProcessorlProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
+        panylcli.WithProcessorProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
             parseflags := struct {
                 Application string `flag:"application"`
                 StartLine   int    `flag:"start-line"`
@@ -81,9 +83,9 @@ func main() {
             ret := panyl.NewProcessor(panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount))
             if preset != "" {
                 if preset == "default" {
-                    pluginsEnabled = []string{"ansiescape", "json"}
+                    pluginsEnabled = append(pluginsEnabled, "json")
                 } else {
-                    return nil, fmt.Errorf("Preset '%s' not supported", preset)
+                    return nil, fmt.Errorf("unknown preset '%s'", preset)
                 }
             }
 
@@ -91,7 +93,7 @@ func main() {
                 ret.RegisterPlugin(&metadata.ForceApplication{Application: parseflags.Application})
             }
 
-            for _, plugin := range pluginsEnabled {
+            for _, plugin := range panylcli.PluginsEnabledUnique(pluginsEnabled) {
                 switch plugin {
                 case "ansiescape":
                     ret.RegisterPlugin(&clean.AnsiEscape{})
@@ -111,7 +113,7 @@ func main() {
 
     err := cmd.Execute()
     if err != nil {
-        fmt.Fprintln(os.Stderr, err.Error())
+        _, _ = fmt.Fprintln(os.Stderr, err.Error())
         os.Exit(1)
     }
 }

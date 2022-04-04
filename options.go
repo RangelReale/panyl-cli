@@ -37,8 +37,10 @@ func WithDeclareLogFlags(f FlagsProvider) Option {
 }
 
 type PluginOption struct {
-	Name    string
-	Enabled bool
+	Name          string
+	Enabled       bool
+	Preset        bool
+	PresetEnabled bool
 }
 
 func WithPluginOptions(pluginOptions []PluginOption) Option {
@@ -49,7 +51,7 @@ func WithPluginOptions(pluginOptions []PluginOption) Option {
 
 type ProcessorProviderFunc func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error)
 
-func WithProcessorlProvider(f ProcessorProviderFunc) Option {
+func WithProcessorProvider(f ProcessorProviderFunc) Option {
 	return func(o *options) {
 		o.processorProvider = f
 	}

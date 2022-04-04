@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/RangelReale/panyl"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +25,32 @@ func New(opt ...Option) *Cmd {
 
 	ret.cmd = &cobra.Command{}
 
-	executeFunc := func(cmd *cobra.Command, processor *panyl.Processor, filename string) error {
+	executeFunc := func(cmd *cobra.Command, preset string, filename string) error {
+		if opts.processorProvider == nil {
+			return errors.New("Panyl provider was not set")
+		}
+
+		// check enabled plugins
+		var pluginsEnabled []string
+		for _, po := range opts.pluginOptions {
+			if preset == "" || po.Preset {
+				enabled, err := cmd.Flags().GetBool(fmt.Sprintf("enable-%s", po.Name))
+				if err != nil {
+					return err
+				}
+				if enabled {
+					pluginsEnabled = append(pluginsEnabled, po.Name)
+				}
+			}
+		}
+
+		// create panyl processor
+		processor, err := opts.processorProvider(preset, pluginsEnabled, cmd.Flags())
+		if err != nil {
+			return err
+		}
+
+		// open source file or stdin
 		var source io.Reader
 		if filename == "-" {
 			source = os.Stdin
@@ -39,28 +63,23 @@ func New(opt ...Option) *Cmd {
 			source = file
 		}
 
+		// create the result provider
 		result, err := opts.resultProvider(cmd.Flags())
 		if err != nil {
 			return err
 		}
 
+		// process
 		return processor.Process(source, result)
 	}
 
 	ret.presetCmd = &cobra.Command{
-		Use:     "preset",
+		Use:     "preset <preset-name> [flags]",
 		Short:   "run using preset plugins",
 		Aliases: []string{"p"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.processorProvider == nil {
-				return errors.New("Panyl provider was not set")
-			}
-			processor, err := opts.processorProvider(args[0], nil, cmd.Flags())
-			if err != nil {
-				return err
-			}
-			return executeFunc(cmd, processor, args[1])
+			return executeFunc(cmd, args[0], args[1])
 		},
 	}
 
@@ -70,25 +89,7 @@ func New(opt ...Option) *Cmd {
 		Aliases: []string{"l"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.processorProvider == nil {
-				return errors.New("Panyl provider was not set")
-			}
-			var pluginsEnabled []string
-			for _, po := range opts.pluginOptions {
-				enabled, err := cmd.Flags().GetBool(fmt.Sprintf("enable-%s", po.Name))
-				if err != nil {
-					return err
-				}
-				if enabled {
-					pluginsEnabled = append(pluginsEnabled, po.Name)
-				}
-			}
-
-			processor, err := opts.processorProvider("", pluginsEnabled, cmd.Flags())
-			if err != nil {
-				return err
-			}
-			return executeFunc(cmd, processor, args[0])
+			return executeFunc(cmd, "", args[0])
 		},
 	}
 
@@ -105,6 +106,10 @@ func New(opt ...Option) *Cmd {
 	for _, pluginOption := range opts.pluginOptions {
 		ret.logCmd.Flags().Bool(fmt.Sprintf("enable-%s", pluginOption.Name), pluginOption.Enabled,
 			fmt.Sprintf("Enable '%s' plugin", pluginOption.Name))
+		if pluginOption.Preset {
+			ret.presetCmd.Flags().Bool(fmt.Sprintf("enable-%s", pluginOption.Name), pluginOption.PresetEnabled,
+				fmt.Sprintf("Enable '%s' plugin", pluginOption.Name))
+		}
 	}
 
 	ret.cmd.AddCommand(ret.presetCmd, ret.logCmd)
