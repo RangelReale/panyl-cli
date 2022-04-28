@@ -79,9 +79,9 @@ func main() {
 		}),
 	)
 
-	err := cmd.Execute()
+	exitCode, err := cmd.Execute()
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
 	}
+	os.Exit(exitCode)
 }

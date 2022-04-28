@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"os/signal"
+	"runtime"
+	"syscall"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +29,7 @@ func New(opt ...Option) *Cmd {
 
 	ret.cmd = &cobra.Command{}
 
-	executeFunc := func(cmd *cobra.Command, preset string, filename string) error {
+	executeFunc := func(cmd *cobra.Command, preset string, isExec bool, args []string) error {
 		if opts.processorProvider == nil {
 			return errors.New("Panyl provider was not set")
 		}
@@ -50,17 +54,44 @@ func New(opt ...Option) *Cmd {
 			return err
 		}
 
-		// open source file or stdin
 		var source io.Reader
-		if filename == "-" {
-			source = os.Stdin
-		} else {
-			file, err := os.Open(filename)
+		var execCmd *exec.Cmd
+		if isExec {
+			// run the passed command
+			execCmd = exec.Command(args[0], args[1:]...)
+			source, err = execCmd.StdoutPipe()
 			if err != nil {
-				return err
+				return fmt.Errorf("error creating stdout pipe: %v", err)
 			}
-			defer file.Close()
-			source = file
+			execCmd.Stderr = execCmd.Stdout
+
+			err := execCmd.Start()
+			if err != nil {
+				return fmt.Errorf("error starting command: %v", err)
+			}
+
+			c := make(chan os.Signal)
+			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+			go func() {
+				s := <-c
+				if runtime.GOOS != "windows" {
+					execCmd.Process.Signal(s)
+				} else {
+					execCmd.Process.Kill()
+				}
+			}()
+		} else {
+			// open source file or stdin
+			if args[0] == "-" {
+				source = os.Stdin
+			} else {
+				file, err := os.Open(args[0])
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+				source = file
+			}
 		}
 
 		// create the result provider
@@ -70,16 +101,32 @@ func New(opt ...Option) *Cmd {
 		}
 
 		// process
-		return processor.Process(source, result)
+		err = processor.Process(source, result)
+		if err != nil {
+			return err
+		}
+		if execCmd != nil {
+			err = execCmd.Wait()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	ret.presetCmd = &cobra.Command{
 		Use:     "preset <preset-name> [flags]",
 		Short:   "run using preset plugins",
 		Aliases: []string{"p"},
-		Args:    cobra.ExactArgs(2),
+		Args:    cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return executeFunc(cmd, args[0], args[1])
+			if cmd.Flags().ArgsLenAtDash() == 0 {
+				return errors.New("missing preset name")
+			}
+			if cmd.Flags().ArgsLenAtDash() > 1 {
+				return errors.New("command to execute must be the last parameter")
+			}
+			return executeFunc(cmd, args[0], cmd.Flags().ArgsLenAtDash() != -1, args[1:])
 		},
 	}
 
@@ -87,9 +134,12 @@ func New(opt ...Option) *Cmd {
 		Use:     "log",
 		Short:   "run using configurable plugin",
 		Aliases: []string{"l"},
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return executeFunc(cmd, "", args[0])
+			if cmd.Flags().ArgsLenAtDash() > 0 {
+				return errors.New("command to execute must be the last parameter")
+			}
+			return executeFunc(cmd, "", cmd.Flags().ArgsLenAtDash() != -1, args)
 		},
 	}
 
@@ -117,6 +167,15 @@ func New(opt ...Option) *Cmd {
 	return ret
 }
 
-func (c *Cmd) Execute() error {
-	return c.cmd.Execute()
+// Execute executes the command and returns the exit code and error if available
+func (c *Cmd) Execute() (int, error) {
+	err := c.cmd.Execute()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			waitStatus := exitError.Sys().(syscall.WaitStatus)
+			return waitStatus.ExitStatus(), err
+		}
+		return 1, err
+	}
+	return 0, nil
 }

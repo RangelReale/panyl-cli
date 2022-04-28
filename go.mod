@@ -1,6 +1,6 @@
 module github.com/RangelReale/panyl-cli
 
-go 1.17
+go 1.18
 
 require (
 	github.com/RangelReale/panyl v0.6.7
