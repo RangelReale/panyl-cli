@@ -39,8 +39,6 @@ func main() {
 		panylcli.WithProcessorProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
 			parseflags := struct {
 				Application string `flag:"application"`
-				StartLine   int    `flag:"start-line"`
-				LineAmount  int    `flag:"line-amount"`
 			}{}
 
 			err := panylcli.ParseFlags(flags, &parseflags)
@@ -48,7 +46,7 @@ func main() {
 				return nil, err
 			}
 
-			ret := panyl.NewProcessor(panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount))
+			ret := panyl.NewProcessor()
 			if preset != "" {
 				if preset == "default" {
 					pluginsEnabled = append(pluginsEnabled, "json")
