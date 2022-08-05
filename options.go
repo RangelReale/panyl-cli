@@ -49,7 +49,7 @@ func WithPluginOptions(pluginOptions []PluginOption) Option {
 	}
 }
 
-type ProcessorProviderFunc func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error)
+type ProcessorProviderFunc func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, []panyl.JobOption, error)
 
 func WithProcessorProvider(f ProcessorProviderFunc) Option {
 	return func(o *options) {

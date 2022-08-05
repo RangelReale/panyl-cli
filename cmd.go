@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/RangelReale/panyl"
 	"github.com/spf13/cobra"
 )
 
@@ -35,16 +34,6 @@ func New(opt ...Option) *Cmd {
 			return errors.New("Panyl provider was not set")
 		}
 
-		parseflags := struct {
-			StartLine  int `flag:"start-line"`
-			LineAmount int `flag:"line-amount"`
-		}{}
-
-		err := ParseFlags(cmd.Flags(), &parseflags)
-		if err != nil {
-			return err
-		}
-
 		// check enabled plugins
 		var pluginsEnabled []string
 		for _, po := range opts.pluginOptions {
@@ -60,7 +49,7 @@ func New(opt ...Option) *Cmd {
 		}
 
 		// create panyl processor
-		processor, err := opts.processorProvider(preset, pluginsEnabled, cmd.Flags())
+		processor, jobOptions, err := opts.processorProvider(preset, pluginsEnabled, cmd.Flags())
 		if err != nil {
 			return err
 		}
@@ -112,8 +101,7 @@ func New(opt ...Option) *Cmd {
 		}
 
 		// process
-		err = processor.Process(source, result,
-			panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount))
+		err = processor.Process(source, result, jobOptions...)
 		if err != nil {
 			return err
 		}

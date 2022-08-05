@@ -70,44 +70,44 @@ func main() {
                 Enabled: false,
             },
         }),
-        panylcli.WithProcessorProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
-            parseflags := struct {
-                Application string `flag:"application"`
-                StartLine   int    `flag:"start-line"`
-                LineAmount  int    `flag:"line-amount"`
-            }{}
+		panylcli.WithProcessorProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, []panyl.JobOption, error) {
+			parseflags := struct {
+				Application string `flag:"application"`
+				StartLine   int    `flag:"start-line"`
+				LineAmount  int    `flag:"line-amount"`
+			}{}
 
-            err := panylcli.ParseFlags(flags, &parseflags)
-            if err != nil {
-                return nil, err
-            }
+			err := panylcli.ParseFlags(flags, &parseflags)
+			if err != nil {
+				return nil, nil, err
+			}
 
-            ret := panyl.NewProcessor(panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount))
-            if preset != "" {
-                if preset == "default" {
-                    pluginsEnabled = append(pluginsEnabled, "json")
-                } else {
-                    return nil, fmt.Errorf("unknown preset '%s'", preset)
-                }
-            }
+			ret := panyl.NewProcessor()
+			if preset != "" {
+				if preset == "default" {
+					pluginsEnabled = append(pluginsEnabled, "json")
+				} else {
+					return nil, nil, fmt.Errorf("unknown preset '%s'", preset)
+				}
+			}
 
-            if parseflags.Application != "" {
-                ret.RegisterPlugin(&metadata.ForceApplication{Application: parseflags.Application})
-            }
+			if parseflags.Application != "" {
+				ret.RegisterPlugin(&metadata.ForceApplication{Application: parseflags.Application})
+			}
 
-            for _, plugin := range panylcli.PluginsEnabledUnique(pluginsEnabled) {
-                switch plugin {
-                case "ansiescape":
-                    ret.RegisterPlugin(&clean.AnsiEscape{})
-                case "json":
-                    ret.RegisterPlugin(&structure.JSON{})
-                case "consolidate-lines":
-                    ret.RegisterPlugin(&consolidate.JoinAllLines{})
-                }
-            }
+			for _, plugin := range panylcli.PluginsEnabledUnique(pluginsEnabled) {
+				switch plugin {
+				case "ansiescape":
+					ret.RegisterPlugin(&clean.AnsiEscape{})
+				case "json":
+					ret.RegisterPlugin(&structure.JSON{})
+				case "consolidate-lines":
+					ret.RegisterPlugin(&consolidate.JoinAllLines{})
+				}
+			}
 
-            return ret, nil
-        }),
+			return ret, []panyl.JobOption{panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount)}, nil
+		}),
         panylcli.WithResultProvider(func(flags *pflag.FlagSet) (panyl.ProcessResult, error) {
             return panylcli.NewOutput(), nil
         }),

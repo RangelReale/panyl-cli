@@ -36,14 +36,16 @@ func main() {
 				Enabled: false,
 			},
 		}),
-		panylcli.WithProcessorProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, error) {
+		panylcli.WithProcessorProvider(func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, []panyl.JobOption, error) {
 			parseflags := struct {
 				Application string `flag:"application"`
+				StartLine   int    `flag:"start-line"`
+				LineAmount  int    `flag:"line-amount"`
 			}{}
 
 			err := panylcli.ParseFlags(flags, &parseflags)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			ret := panyl.NewProcessor()
@@ -51,7 +53,7 @@ func main() {
 				if preset == "default" {
 					pluginsEnabled = append(pluginsEnabled, "json")
 				} else {
-					return nil, fmt.Errorf("unknown preset '%s'", preset)
+					return nil, nil, fmt.Errorf("unknown preset '%s'", preset)
 				}
 			}
 
@@ -70,7 +72,7 @@ func main() {
 				}
 			}
 
-			return ret, nil
+			return ret, []panyl.JobOption{panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount)}, nil
 		}),
 		panylcli.WithResultProvider(func(flags *pflag.FlagSet) (panyl.ProcessResult, error) {
 			return panylcli.NewOutput(), nil
