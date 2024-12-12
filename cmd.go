@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -55,30 +54,37 @@ func New(opt ...Option) *Cmd {
 		}
 
 		var source io.Reader
-		var execCmd *exec.Cmd
+		// var execCmd *exec.Cmd
+		var execCmd *execReader
 		if isExec {
 			// run the passed command
-			execCmd = exec.Command(args[0], args[1:]...)
-			source, err = execCmd.StdoutPipe()
+			execCmd, err = newExecReader(args[0], args[1:]...)
 			if err != nil {
-				return fmt.Errorf("error creating stdout pipe: %v", err)
+				return err
 			}
-			execCmd.Stderr = execCmd.Stdout
-
-			err := execCmd.Start()
-			if err != nil {
-				return fmt.Errorf("error starting command: %v", err)
-			}
+			// execCmd = exec.Command(args[0], args[1:]...)
+			// source, err = execCmd.StdoutPipe()
+			// if err != nil {
+			// 	return fmt.Errorf("error creating stdout pipe: %v", err)
+			// }
+			// execCmd.Stderr = execCmd.Stdout
+			//
+			// err := execCmd.Start()
+			// if err != nil {
+			// 	return fmt.Errorf("error starting command: %v", err)
+			// }
+			source = execCmd
 
 			c := make(chan os.Signal)
 			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 			go func() {
 				s := <-c
-				if runtime.GOOS != "windows" {
-					execCmd.Process.Signal(s)
-				} else {
-					execCmd.Process.Kill()
-				}
+				execCmd.kill(s)
+				// if runtime.GOOS != "windows" {
+				// 	execCmd.Process.Signal(s)
+				// } else {
+				// 	execCmd.Process.Kill()
+				// }
 			}()
 		} else {
 			// open source file or stdin
