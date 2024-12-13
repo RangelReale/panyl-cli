@@ -3,7 +3,7 @@ module github.com/RangelReale/panyl-cli
 go 1.23
 
 require (
-	github.com/RangelReale/panyl v0.9.0
+	github.com/RangelReale/panyl v0.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 )
