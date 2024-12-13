@@ -58,7 +58,7 @@ func (o *Output) OnResult(p *panyl.Process) (cont bool) {
 	} else if len(p.Data) > 0 {
 		dt, err := json.Marshal(p.Data)
 		if err != nil {
-			out.WriteString(fmt.Sprintf("| Error marshaling data to json: %s", err.Error()))
+			fmt.Printf("Error marshaling data to json: %s\n", err.Error())
 			return
 		}
 		out.WriteString(fmt.Sprintf("| %s", string(dt)))
