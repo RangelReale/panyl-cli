@@ -65,7 +65,7 @@ func New(opt ...Option) *Cmd {
 			source = execCmd
 
 			c := make(chan os.Signal)
-			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+			signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 			go func() {
 				s := <-c
 				execCmd.kill(s)
@@ -93,14 +93,14 @@ func New(opt ...Option) *Cmd {
 		// process
 		err = processor.Process(source, result, jobOptions...)
 		if err != nil {
-			return err
-		}
-		if execCmd != nil {
+			processor.AppLogger().Error("error running processor", "error", err)
+		} else if execCmd != nil {
 			err = execCmd.Wait()
 			if err != nil {
-				return err
+				processor.AppLogger().Error("error executing command", "error", err)
 			}
 		}
+
 		return nil
 	}
 

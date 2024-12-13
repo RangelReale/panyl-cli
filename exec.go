@@ -14,17 +14,9 @@ import (
 	"github.com/RangelReale/panyl"
 )
 
-func ExecProcessFinished(job *panyl.Job) error {
-	return job.ProcessLine(&panyl.Process{
-		LineNo:    0,
-		LineCount: 0,
-		Metadata: map[string]interface{}{
-			panyl.Metadata_Timestamp: time.Now(),
-			panyl.Metadata_Level:     panyl.MetadataLevel_DEBUG,
-			panyl.Metadata_Message:   "process finished",
-		},
-		Line: "process finished",
-	})
+func ExecProcessFinished(processor *panyl.Processor) error {
+	processor.AppLogger().Info("process finished")
+	return nil
 }
 
 type execReader struct {
