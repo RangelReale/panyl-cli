@@ -62,17 +62,6 @@ func New(opt ...Option) *Cmd {
 			if err != nil {
 				return err
 			}
-			// execCmd = exec.Command(args[0], args[1:]...)
-			// source, err = execCmd.StdoutPipe()
-			// if err != nil {
-			// 	return fmt.Errorf("error creating stdout pipe: %v", err)
-			// }
-			// execCmd.Stderr = execCmd.Stdout
-			//
-			// err := execCmd.Start()
-			// if err != nil {
-			// 	return fmt.Errorf("error starting command: %v", err)
-			// }
 			source = execCmd
 
 			c := make(chan os.Signal)
@@ -80,11 +69,6 @@ func New(opt ...Option) *Cmd {
 			go func() {
 				s := <-c
 				execCmd.kill(s)
-				// if runtime.GOOS != "windows" {
-				// 	execCmd.Process.Signal(s)
-				// } else {
-				// 	execCmd.Process.Kill()
-				// }
 			}()
 		} else {
 			// open source file or stdin
