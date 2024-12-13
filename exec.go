@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"runtime"
@@ -27,6 +28,7 @@ func ExecProcessFinished(job *panyl.Job) error {
 }
 
 type execReader struct {
+	logger   *slog.Logger
 	name     string
 	arg      []string
 	isKill   atomic.Bool
@@ -35,8 +37,9 @@ type execReader struct {
 	finished chan struct{}
 }
 
-func newExecReader(name string, arg ...string) (*execReader, error) {
+func newExecReader(logger *slog.Logger, name string, arg ...string) (*execReader, error) {
 	ret := &execReader{
+		logger:   logger,
 		name:     name,
 		arg:      arg,
 		finished: make(chan struct{}),
@@ -68,7 +71,7 @@ func (e *execReader) Read(p []byte) (n int, err error) {
 		if e.isKill.Load() {
 			return n, err
 		}
-		fmt.Println("exec process disconnecting, running again...")
+		e.logger.Warn("exec process disconnecting, running again...")
 		err = e.initReader()
 		if err != nil {
 			return 0, err
@@ -102,7 +105,7 @@ func (e *execReader) Wait() error {
 			if e.isKill.Load() {
 				return err
 			} else if err != nil {
-				fmt.Printf("error executing command: %v\n", err)
+				e.logger.Error("error executing command", "error", err)
 			}
 			time.Sleep(5 * time.Second)
 		} else {

@@ -58,7 +58,7 @@ func New(opt ...Option) *Cmd {
 		var execCmd *execReader
 		if isExec {
 			// run the passed command
-			execCmd, err = newExecReader(args[0], args[1:]...)
+			execCmd, err = newExecReader(processor.AppLogger(), args[0], args[1:]...)
 			if err != nil {
 				return err
 			}
