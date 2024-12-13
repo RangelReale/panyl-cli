@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/RangelReale/panyl"
 	"time"
+
+	"github.com/RangelReale/panyl"
 )
 
 type Output struct {
@@ -57,7 +58,7 @@ func (o *Output) OnResult(p *panyl.Process) (cont bool) {
 	} else if len(p.Data) > 0 {
 		dt, err := json.Marshal(p.Data)
 		if err != nil {
-			fmt.Println("Error marshaling data to json: %s", err.Error())
+			out.WriteString(fmt.Sprintf("| Error marshaling data to json: %s", err.Error()))
 			return
 		}
 		out.WriteString(fmt.Sprintf("| %s", string(dt)))
