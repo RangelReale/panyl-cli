@@ -2,6 +2,7 @@ package panylcli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -12,11 +13,13 @@ import (
 type Output struct {
 }
 
+var _ panyl.ProcessResult = (*Output)(nil)
+
 func NewOutput() *Output {
 	return &Output{}
 }
 
-func (o *Output) OnResult(p *panyl.Process) (cont bool) {
+func (o *Output) OnResult(ctx context.Context, p *panyl.Process) (cont bool) {
 	var out bytes.Buffer
 
 	// level
@@ -68,6 +71,6 @@ func (o *Output) OnResult(p *panyl.Process) (cont bool) {
 	return true
 }
 
-func (o *Output) OnFlush() {}
+func (o *Output) OnFlush(ctx context.Context) {}
 
-func (o *Output) OnClose() {}
+func (o *Output) OnClose(ctx context.Context) {}

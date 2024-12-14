@@ -33,6 +33,8 @@ func New(opt ...Option) *Cmd {
 			return errors.New("Panyl provider was not set")
 		}
 
+		ctx := cmd.Context()
+
 		// check enabled plugins
 		var pluginsEnabled []string
 		for _, po := range opts.pluginOptions {
@@ -58,7 +60,7 @@ func New(opt ...Option) *Cmd {
 		var execCmd *execReader
 		if isExec {
 			// run the passed command
-			execCmd, err = newExecReader(processor.AppLogger(), args[0], args[1:]...)
+			execCmd, err = newExecReader(ctx, processor.AppLogger(), args[0], args[1:]...)
 			if err != nil {
 				return err
 			}
@@ -91,7 +93,7 @@ func New(opt ...Option) *Cmd {
 		}
 
 		// process
-		err = processor.Process(source, result, jobOptions...)
+		err = processor.Process(ctx, source, result, jobOptions...)
 		if err != nil {
 			processor.AppLogger().Error("error running processor", "error", err)
 		} else if execCmd != nil {

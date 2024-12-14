@@ -1,6 +1,7 @@
 package panylcli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ func ExecProcessFinished(processor *panyl.Processor) error {
 }
 
 type execReader struct {
+	ctx      context.Context
 	logger   *slog.Logger
 	name     string
 	arg      []string
@@ -29,8 +31,9 @@ type execReader struct {
 	finished chan struct{}
 }
 
-func newExecReader(logger *slog.Logger, name string, arg ...string) (*execReader, error) {
+func newExecReader(ctx context.Context, logger *slog.Logger, name string, arg ...string) (*execReader, error) {
 	ret := &execReader{
+		ctx:      ctx,
 		logger:   logger,
 		name:     name,
 		arg:      arg,
