@@ -97,7 +97,16 @@ func (e *execReader) Wait() error {
 			if e.isKill.Load() {
 				return err
 			} else if err != nil {
-				e.logger.Error("error executing command", "error", err)
+				var ee *exec.ExitError
+				if errors.As(err, &ee) {
+					if ee.ExitCode() > 0 {
+						return fmt.Errorf("error executing command: %s (exit code: %d)(stderr: '%s')",
+							ee.Error(), ee.ExitCode(), ee.Stderr)
+					}
+					e.logger.Error("error executing command", "error", err, "stderr", ee.Stderr)
+				} else {
+					e.logger.Error("error executing command", "error", err)
+				}
 			}
 			time.Sleep(5 * time.Second)
 		} else {
