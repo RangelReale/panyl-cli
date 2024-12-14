@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/RangelReale/panyl"
+	"github.com/RangelReale/panyl/v2"
 )
 
 func ExecProcessFinished(ctx context.Context, processor *panyl.Processor) error {

@@ -38,7 +38,7 @@ import (
     "fmt"
     "os"
 
-    "github.com/RangelReale/panyl"
+    "github.com/RangelReale/panyl/v2"
     panylcli "github.com/RangelReale/panyl-cli"
     "github.com/RangelReale/panyl/plugins/clean"
     "github.com/RangelReale/panyl/plugins/consolidate"

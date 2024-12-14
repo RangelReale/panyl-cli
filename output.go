@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/RangelReale/panyl"
+	"github.com/RangelReale/panyl/v2"
 )
 
 type Output struct {

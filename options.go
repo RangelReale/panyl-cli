@@ -3,7 +3,7 @@ package panylcli
 import (
 	"context"
 
-	"github.com/RangelReale/panyl"
+	"github.com/RangelReale/panyl/v2"
 	"github.com/spf13/pflag"
 )
 
