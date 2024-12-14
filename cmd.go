@@ -71,6 +71,7 @@ func New(opt ...Option) *Cmd {
 			signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 			go func() {
 				s := <-c
+				SLogCLIFromContext(ctx).Warn("received signal", "signal", s.String())
 				execCmd.kill(s)
 			}()
 		} else {
