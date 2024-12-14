@@ -98,10 +98,7 @@ func New(opt ...Option) *Cmd {
 		if err != nil {
 			SLogCLIFromContext(ctx).Error("error running processor", "error", err)
 		} else if execCmd != nil {
-			err = execCmd.Wait()
-			if err != nil {
-				SLogCLIFromContext(ctx).Error("error executing command", "error", err)
-			}
+			execCmd.Wait()
 		}
 
 		return nil

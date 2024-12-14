@@ -19,6 +19,12 @@ func ExecProcessFinished(ctx context.Context, processor *panyl.Processor) error 
 	return nil
 }
 
+type execData struct {
+	p   []byte
+	n   int
+	err error
+}
+
 type execReader struct {
 	ctx      context.Context
 	name     string
@@ -26,6 +32,7 @@ type execReader struct {
 	isKill   atomic.Bool
 	execCmd  *exec.Cmd
 	source   io.Reader
+	data     chan execData
 	finished chan struct{}
 }
 
@@ -34,13 +41,66 @@ func newExecReader(ctx context.Context, name string, arg ...string) (*execReader
 		ctx:      ctx,
 		name:     name,
 		arg:      arg,
+		data:     make(chan execData),
 		finished: make(chan struct{}),
 	}
 	err := ret.initReader()
 	if err != nil {
 		return nil, err
 	}
+	go ret.execHandler()
 	return ret, nil
+}
+
+func (e *execReader) execHandler() {
+	defer close(e.finished)
+	defer close(e.data)
+	for {
+		// the first time it was already initialized
+		for {
+			item := execData{}
+			item.n, item.err = e.source.Read(item.p)
+			if errors.Is(item.err, io.EOF) {
+				break
+			}
+			select {
+			case <-e.ctx.Done():
+				return
+			case e.data <- item:
+			}
+		}
+
+		if e.isKill.Load() {
+			break
+		}
+
+		// check for exit errors
+		err := e.execCmd.Wait()
+		if err != nil {
+			var ee *exec.ExitError
+			if errors.As(err, &ee) {
+				if ee.ExitCode() > 0 {
+					e.data <- execData{err: fmt.Errorf("error executing command: %s (exit code: %d)(stderr: '%s')",
+						ee.Error(), ee.ExitCode(), ee.Stderr)}
+				}
+				SLogCLIFromContext(e.ctx).Error("error executing command", "error", err, "stderr", ee.Stderr)
+			} else {
+				SLogCLIFromContext(e.ctx).Error("error executing command", "error", err)
+			}
+		}
+
+		time.Sleep(5 * time.Second)
+
+		if e.isKill.Load() {
+			break
+		}
+
+		// initialize a new reader
+		err = e.initReader()
+		if err != nil {
+			e.data <- execData{err: err}
+		}
+	}
 }
 
 func (e *execReader) kill(s os.Signal) {
@@ -55,22 +115,15 @@ func (e *execReader) kill(s os.Signal) {
 }
 
 func (e *execReader) Read(p []byte) (n int, err error) {
-	if e.source == nil {
-		return 0, errors.New("execReader: source is nil")
-	}
-	n, err = e.source.Read(p)
-	if errors.Is(err, io.EOF) {
-		if e.isKill.Load() {
-			return n, err
+	select {
+	case <-e.ctx.Done():
+	case data, ok := <-e.data:
+		if ok {
+			copy(p, data.p)
+			return data.n, data.err
 		}
-		SLogCLIFromContext(e.ctx).Warn("exec process disconnecting, running again...")
-		err = e.initReader()
-		if err != nil {
-			return 0, err
-		}
-		return 0, nil
 	}
-	return n, err
+	return 0, io.EOF
 }
 
 func (e *execReader) initReader() error {
@@ -90,27 +143,6 @@ func (e *execReader) initReader() error {
 	return nil
 }
 
-func (e *execReader) Wait() error {
-	for {
-		if e.execCmd != nil {
-			err := e.execCmd.Wait()
-			if e.isKill.Load() {
-				return err
-			} else if err != nil {
-				var ee *exec.ExitError
-				if errors.As(err, &ee) {
-					if ee.ExitCode() > 0 {
-						return fmt.Errorf("error executing command: %s (exit code: %d)(stderr: '%s')",
-							ee.Error(), ee.ExitCode(), ee.Stderr)
-					}
-					SLogCLIFromContext(e.ctx).Error("error executing command", "error", err, "stderr", ee.Stderr)
-				} else {
-					SLogCLIFromContext(e.ctx).Error("error executing command", "error", err)
-				}
-			}
-			time.Sleep(5 * time.Second)
-		} else {
-			return fmt.Errorf("no exec process running")
-		}
-	}
+func (e *execReader) Wait() {
+	<-e.finished
 }
