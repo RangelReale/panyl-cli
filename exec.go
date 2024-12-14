@@ -20,12 +20,13 @@ func ExecProcessFinished(ctx context.Context, processor *panyl.Processor) error 
 }
 
 type execReader struct {
-	ctx     context.Context
-	name    string
-	arg     []string
-	isKill  atomic.Bool
-	execCmd *exec.Cmd
-	source  io.Reader
+	ctx         context.Context
+	name        string
+	arg         []string
+	isKill      atomic.Bool
+	execCmd     *exec.Cmd
+	source      io.Reader
+	outputCache []byte
 }
 
 func newExecReader(ctx context.Context, name string, arg ...string) (*execReader, error) {
@@ -62,7 +63,9 @@ loop:
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			// fmt.Println(string(p[:n]))
+			if len(e.outputCache) < 200 {
+				e.outputCache = append(e.outputCache, p[:min(n, 200-len(e.outputCache))]...)
+			}
 			select {
 			case <-e.ctx.Done():
 				break loop
@@ -83,8 +86,12 @@ loop:
 			var ee *exec.ExitError
 			if errors.As(err, &ee) {
 				if ee.ExitCode() > 0 {
+					var outputCache string
+					if len(e.outputCache) < 199 {
+						outputCache = string(e.outputCache)
+					}
 					return 0, fmt.Errorf("error executing command: %s (exit code: %d)(stderr: '%s')",
-						ee.Error(), ee.ExitCode(), ee.Stderr)
+						ee.Error(), ee.ExitCode(), outputCache)
 				}
 				SLogCLIFromContext(e.ctx).Warn("exec process exited, running again...",
 					"error", err.Error(),
@@ -116,6 +123,7 @@ loop:
 }
 
 func (e *execReader) initReader() error {
+	e.outputCache = nil
 	var err error
 	// run the passed command
 	e.execCmd = exec.Command(e.name, e.arg...)
