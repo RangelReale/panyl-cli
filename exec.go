@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"os/exec"
 	"runtime"
@@ -15,14 +14,13 @@ import (
 	"github.com/RangelReale/panyl"
 )
 
-func ExecProcessFinished(processor *panyl.Processor) error {
-	processor.AppLogger().Info("process finished")
+func ExecProcessFinished(ctx context.Context, processor *panyl.Processor) error {
+	SLogCLIFromContext(ctx).Info("process finished")
 	return nil
 }
 
 type execReader struct {
 	ctx      context.Context
-	logger   *slog.Logger
 	name     string
 	arg      []string
 	isKill   atomic.Bool
@@ -31,10 +29,9 @@ type execReader struct {
 	finished chan struct{}
 }
 
-func newExecReader(ctx context.Context, logger *slog.Logger, name string, arg ...string) (*execReader, error) {
+func newExecReader(ctx context.Context, name string, arg ...string) (*execReader, error) {
 	ret := &execReader{
 		ctx:      ctx,
-		logger:   logger,
 		name:     name,
 		arg:      arg,
 		finished: make(chan struct{}),
@@ -66,7 +63,7 @@ func (e *execReader) Read(p []byte) (n int, err error) {
 		if e.isKill.Load() {
 			return n, err
 		}
-		e.logger.Warn("exec process disconnecting, running again...")
+		SLogCLIFromContext(e.ctx).Warn("exec process disconnecting, running again...")
 		err = e.initReader()
 		if err != nil {
 			return 0, err
@@ -106,9 +103,9 @@ func (e *execReader) Wait() error {
 						return fmt.Errorf("error executing command: %s (exit code: %d)(stderr: '%s')",
 							ee.Error(), ee.ExitCode(), ee.Stderr)
 					}
-					e.logger.Error("error executing command", "error", err, "stderr", ee.Stderr)
+					SLogCLIFromContext(e.ctx).Error("error executing command", "error", err, "stderr", ee.Stderr)
 				} else {
-					e.logger.Error("error executing command", "error", err)
+					SLogCLIFromContext(e.ctx).Error("error executing command", "error", err)
 				}
 			}
 			time.Sleep(5 * time.Second)

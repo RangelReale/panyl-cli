@@ -1,6 +1,8 @@
 package panylcli
 
 import (
+	"context"
+
 	"github.com/RangelReale/panyl"
 	"github.com/spf13/pflag"
 )
@@ -49,7 +51,8 @@ func WithPluginOptions(pluginOptions []PluginOption) Option {
 	}
 }
 
-type ProcessorProviderFunc func(preset string, pluginsEnabled []string, flags *pflag.FlagSet) (*panyl.Processor, []panyl.JobOption, error)
+type ProcessorProviderFunc func(ctx context.Context, preset string, pluginsEnabled []string,
+	flags *pflag.FlagSet) (context.Context, *panyl.Processor, []panyl.JobOption, error)
 
 func WithProcessorProvider(f ProcessorProviderFunc) Option {
 	return func(o *options) {
@@ -57,7 +60,7 @@ func WithProcessorProvider(f ProcessorProviderFunc) Option {
 	}
 }
 
-type ResultProviderFunc func(flags *pflag.FlagSet) (panyl.ProcessResult, error)
+type ResultProviderFunc func(ctx context.Context, flags *pflag.FlagSet) (panyl.ProcessResult, error)
 
 func WithResultProvider(f ResultProviderFunc) Option {
 	return func(o *options) {

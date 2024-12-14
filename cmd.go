@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -33,7 +34,7 @@ func New(opt ...Option) *Cmd {
 			return errors.New("Panyl provider was not set")
 		}
 
-		ctx := cmd.Context()
+		ctx := SLogCLIToContext(cmd.Context(), slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
 
 		// check enabled plugins
 		var pluginsEnabled []string
@@ -50,7 +51,7 @@ func New(opt ...Option) *Cmd {
 		}
 
 		// create panyl processor
-		processor, jobOptions, err := opts.processorProvider(preset, pluginsEnabled, cmd.Flags())
+		ctx, processor, jobOptions, err := opts.processorProvider(ctx, preset, pluginsEnabled, cmd.Flags())
 		if err != nil {
 			return err
 		}
@@ -60,7 +61,7 @@ func New(opt ...Option) *Cmd {
 		var execCmd *execReader
 		if isExec {
 			// run the passed command
-			execCmd, err = newExecReader(ctx, processor.AppLogger(), args[0], args[1:]...)
+			execCmd, err = newExecReader(ctx, args[0], args[1:]...)
 			if err != nil {
 				return err
 			}
@@ -87,7 +88,7 @@ func New(opt ...Option) *Cmd {
 		}
 
 		// create the result provider
-		result, err := opts.resultProvider(cmd.Flags())
+		result, err := opts.resultProvider(ctx, cmd.Flags())
 		if err != nil {
 			return err
 		}
@@ -95,11 +96,11 @@ func New(opt ...Option) *Cmd {
 		// process
 		err = processor.Process(ctx, source, result, jobOptions...)
 		if err != nil {
-			processor.AppLogger().Error("error running processor", "error", err)
+			SLogCLIFromContext(ctx).Error("error running processor", "error", err)
 		} else if execCmd != nil {
 			err = execCmd.Wait()
 			if err != nil {
-				processor.AppLogger().Error("error executing command", "error", err)
+				SLogCLIFromContext(ctx).Error("error executing command", "error", err)
 			}
 		}
 
