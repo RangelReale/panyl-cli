@@ -39,11 +39,11 @@ import (
     "os"
 
     "github.com/RangelReale/panyl/v2"
-    panylcli "github.com/RangelReale/panyl-cli"
-    "github.com/RangelReale/panyl/plugins/clean"
-    "github.com/RangelReale/panyl/plugins/consolidate"
-    "github.com/RangelReale/panyl/plugins/metadata"
-    "github.com/RangelReale/panyl/plugins/structure"
+    panylcli "github.com/RangelReale/panyl-cli/v2"
+    "github.com/RangelReale/panyl/v2/plugins/clean"
+    "github.com/RangelReale/panyl/v2/plugins/consolidate"
+    "github.com/RangelReale/panyl/v2/plugins/metadata"
+    "github.com/RangelReale/panyl/v2/plugins/structure"
     "github.com/spf13/pflag"
 )
 
