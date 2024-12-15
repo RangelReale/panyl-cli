@@ -19,7 +19,7 @@ func NewOutput() *Output {
 	return &Output{}
 }
 
-func (o *Output) OnResult(ctx context.Context, p *panyl.Process) (cont bool) {
+func (o *Output) OnResult(ctx context.Context, p *panyl.Item) (cont bool) {
 	var out bytes.Buffer
 
 	// level
