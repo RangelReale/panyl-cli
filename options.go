@@ -13,7 +13,7 @@ type options struct {
 	logFlags          FlagsProvider
 	pluginOptions     []PluginOption
 	processorProvider ProcessorProviderFunc
-	resultProvider    ResultProviderFunc
+	outputProvider    OutputProviderFunc
 }
 
 type Option func(*options)
@@ -60,10 +60,10 @@ func WithProcessorProvider(f ProcessorProviderFunc) Option {
 	}
 }
 
-type ResultProviderFunc func(ctx context.Context, flags *pflag.FlagSet) (panyl.Output, error)
+type OutputProviderFunc func(ctx context.Context, flags *pflag.FlagSet) (panyl.Output, error)
 
-func WithResultProvider(f ResultProviderFunc) Option {
+func WithOutputProvider(f OutputProviderFunc) Option {
 	return func(o *options) {
-		o.resultProvider = f
+		o.outputProvider = f
 	}
 }

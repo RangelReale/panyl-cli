@@ -108,7 +108,7 @@ func main() {
 
 			return ret, []panyl.JobOption{panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount)}, nil
 		}),
-        panylcli.WithResultProvider(func(flags *pflag.FlagSet) (panyl.ProcessResult, error) {
+        panylcli.WithOutputProvider(func(flags *pflag.FlagSet) (panyl.Output, error) {
             return panylcli.NewOutput(), nil
         }),
     )

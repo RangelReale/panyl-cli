@@ -88,14 +88,14 @@ func New(opt ...Option) *Cmd {
 			}
 		}
 
-		// create the result provider
-		result, err := opts.resultProvider(ctx, cmd.Flags())
+		// create the output provider
+		output, err := opts.outputProvider(ctx, cmd.Flags())
 		if err != nil {
 			return err
 		}
 
 		// process
-		err = processor.Process(ctx, source, result, jobOptions...)
+		err = processor.Process(ctx, source, output, jobOptions...)
 		if err != nil {
 			SLogCLIFromContext(ctx).Error("error running processor", "error", err)
 		} else if execCmd != nil {
