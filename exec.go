@@ -14,7 +14,7 @@ import (
 	"github.com/RangelReale/panyl/v2"
 )
 
-func ExecProcessFinished(ctx context.Context, processor *panyl.Processor) error {
+func ExecProcessFinished(ctx context.Context, job *panyl.Job) error {
 	SLogCLIFromContext(ctx).Info("process finished")
 	return nil
 }

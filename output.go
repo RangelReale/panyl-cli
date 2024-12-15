@@ -13,13 +13,13 @@ import (
 type DefaultOutput struct {
 }
 
-var _ panyl.Output = (*DefaultOutput)(nil)
+var _ panyl.Output = DefaultOutput{}
 
-func NewDefaultOutput() *DefaultOutput {
-	return &DefaultOutput{}
+func NewDefaultOutput() DefaultOutput {
+	return DefaultOutput{}
 }
 
-func (o *DefaultOutput) OnItem(ctx context.Context, item *panyl.Item) (cont bool) {
+func (o DefaultOutput) OnItem(ctx context.Context, item *panyl.Item) (cont bool) {
 	var out bytes.Buffer
 
 	// level
@@ -69,6 +69,6 @@ func (o *DefaultOutput) OnItem(ctx context.Context, item *panyl.Item) (cont bool
 	return true
 }
 
-func (o *DefaultOutput) OnFlush(ctx context.Context) {}
+func (o DefaultOutput) OnFlush(ctx context.Context) {}
 
-func (o *DefaultOutput) OnClose(ctx context.Context) {}
+func (o DefaultOutput) OnClose(ctx context.Context) {}
