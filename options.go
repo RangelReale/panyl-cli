@@ -60,7 +60,7 @@ func WithProcessorProvider(f ProcessorProviderFunc) Option {
 	}
 }
 
-type ResultProviderFunc func(ctx context.Context, flags *pflag.FlagSet) (panyl.ProcessResult, error)
+type ResultProviderFunc func(ctx context.Context, flags *pflag.FlagSet) (panyl.Output, error)
 
 func WithResultProvider(f ResultProviderFunc) Option {
 	return func(o *options) {
