@@ -77,7 +77,7 @@ func main() {
 			return ctx, ret, []panyl.JobOption{panyl.WithLineLimit(parseflags.StartLine, parseflags.LineAmount)}, nil
 		}),
 		panylcli.WithOutputProvider(func(ctx context.Context, flags *pflag.FlagSet) (panyl.Output, error) {
-			return panylcli.NewOutput(), nil
+			return panylcli.NewDefaultOutput(), nil
 		}),
 	)
 

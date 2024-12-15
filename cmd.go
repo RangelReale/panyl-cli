@@ -31,7 +31,7 @@ func New(opt ...Option) *Cmd {
 
 	executeFunc := func(cmd *cobra.Command, preset string, isExec bool, args []string) error {
 		if opts.processorProvider == nil {
-			return errors.New("Panyl provider was not set")
+			return errors.New("provider was not set")
 		}
 
 		ctx := SLogCLIToContext(cmd.Context(), slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
@@ -58,21 +58,21 @@ func New(opt ...Option) *Cmd {
 
 		var source io.Reader
 		// var execCmd *exec.Cmd
-		var execCmd *execReader
+		var execHandler *execReader
 		if isExec {
 			// run the passed command
-			execCmd, err = newExecReader(ctx, args[0], args[1:]...)
+			execHandler, err = newExecReader(ctx, args[0], args[1:]...)
 			if err != nil {
 				return err
 			}
-			source = execCmd
+			source = execHandler
 
 			c := make(chan os.Signal)
 			signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 			go func() {
 				s := <-c
 				SLogCLIFromContext(ctx).Warn("received signal", "signal", s.String())
-				execCmd.kill(s)
+				execHandler.kill(s)
 			}()
 		} else {
 			// open source file or stdin
@@ -98,8 +98,8 @@ func New(opt ...Option) *Cmd {
 		err = processor.Process(ctx, source, output, jobOptions...)
 		if err != nil {
 			SLogCLIFromContext(ctx).Error("error running processor", "error", err)
-		} else if execCmd != nil {
-			execCmd.Wait()
+		} else if execHandler != nil {
+			execHandler.Wait()
 		}
 
 		return nil

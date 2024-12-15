@@ -10,16 +10,16 @@ import (
 	"github.com/RangelReale/panyl/v2"
 )
 
-type Output struct {
+type DefaultOutput struct {
 }
 
-var _ panyl.Output = (*Output)(nil)
+var _ panyl.Output = (*DefaultOutput)(nil)
 
-func NewOutput() *Output {
-	return &Output{}
+func NewDefaultOutput() *DefaultOutput {
+	return &DefaultOutput{}
 }
 
-func (o *Output) OnItem(ctx context.Context, item *panyl.Item) (cont bool) {
+func (o *DefaultOutput) OnItem(ctx context.Context, item *panyl.Item) (cont bool) {
 	var out bytes.Buffer
 
 	// level
@@ -39,9 +39,7 @@ func (o *Output) OnItem(ctx context.Context, item *panyl.Item) (cont bool) {
 	}
 
 	// level
-	if level != "" {
-		out.WriteString(fmt.Sprintf("[%s] ", level))
-	}
+	out.WriteString(fmt.Sprintf("[%s] ", level))
 
 	// format
 	if format := item.Metadata.StringValue(panyl.MetadataFormat); format != "" {
@@ -71,6 +69,6 @@ func (o *Output) OnItem(ctx context.Context, item *panyl.Item) (cont bool) {
 	return true
 }
 
-func (o *Output) OnFlush(ctx context.Context) {}
+func (o *DefaultOutput) OnFlush(ctx context.Context) {}
 
-func (o *Output) OnClose(ctx context.Context) {}
+func (o *DefaultOutput) OnClose(ctx context.Context) {}
