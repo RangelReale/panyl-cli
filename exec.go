@@ -20,20 +20,22 @@ func ExecProcessFinished(ctx context.Context, job *panyl.Job) error {
 }
 
 type execReader struct {
-	ctx         context.Context
-	name        string
-	arg         []string
-	isKill      atomic.Bool
-	execCmd     *exec.Cmd
-	source      io.Reader
-	outputCache []byte
+	ctx            context.Context
+	name           string
+	arg            []string
+	restartOnClose bool
+	isKill         atomic.Bool
+	execCmd        *exec.Cmd
+	source         io.Reader
+	outputCache    []byte
 }
 
-func newExecReader(ctx context.Context, name string, arg ...string) (*execReader, error) {
+func newExecReader(ctx context.Context, restartOnClose bool, name string, arg ...string) (*execReader, error) {
 	ret := &execReader{
-		ctx:  ctx,
-		name: name,
-		arg:  arg,
+		ctx:            ctx,
+		name:           name,
+		arg:            arg,
+		restartOnClose: restartOnClose,
 	}
 	err := ret.initReader()
 	if err != nil {
@@ -93,14 +95,21 @@ loop:
 					return 0, fmt.Errorf("error executing command: %s (exit code: %d)(stderr: '%s')",
 						ee.Error(), ee.ExitCode(), outputCache)
 				}
-				SLogCLIFromContext(e.ctx).Warn("exec process exited, running again...",
-					"error", err.Error(),
-					"exitCode", ee.ExitCode())
+				if e.restartOnClose {
+					SLogCLIFromContext(e.ctx).Warn("exec process exited, running again...",
+						"error", err.Error(),
+						"exitCode", ee.ExitCode())
+				}
 			} else {
 				SLogCLIFromContext(e.ctx).Error("error executing command", "error", err.Error())
 			}
 		} else {
-			SLogCLIFromContext(e.ctx).Warn("exec process exited, running again...")
+			if e.restartOnClose {
+				SLogCLIFromContext(e.ctx).Warn("exec process exited, running again...")
+			}
+		}
+		if !e.restartOnClose {
+			break
 		}
 
 		select {

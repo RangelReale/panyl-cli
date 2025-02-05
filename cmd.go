@@ -28,10 +28,16 @@ func New(opt ...Option) *Cmd {
 	ret := &Cmd{}
 
 	ret.cmd = &cobra.Command{}
+	ret.cmd.PersistentFlags().Bool("restart", true, "restart on close")
 
 	executeFunc := func(cmd *cobra.Command, preset string, isExec bool, args []string) error {
 		if opts.processorProvider == nil {
 			return errors.New("provider was not set")
+		}
+
+		restartOnClose, err := cmd.Flags().GetBool("restart")
+		if err != nil {
+			return err
 		}
 
 		ctx := SLogCLIToContext(cmd.Context(), slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
@@ -61,7 +67,7 @@ func New(opt ...Option) *Cmd {
 		var execHandler *execReader
 		if isExec {
 			// run the passed command
-			execHandler, err = newExecReader(ctx, args[0], args[1:]...)
+			execHandler, err = newExecReader(ctx, restartOnClose, args[0], args[1:]...)
 			if err != nil {
 				return err
 			}
