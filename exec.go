@@ -49,7 +49,7 @@ func (e *execReader) restart() {
 	if e.isKill.Load() {
 		return
 	}
-	SLogCLIFromContext(e.ctx).Warn("restarting process")
+	// SLogCLIFromContext(e.ctx).Warn("restarting process")
 	e.isRestart.Store(true)
 	e.doKill(os.Kill)
 }
