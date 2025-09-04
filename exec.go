@@ -25,6 +25,7 @@ type execReader struct {
 	arg            []string
 	restartOnClose bool
 	isKill         atomic.Bool
+	isRestart      atomic.Bool
 	execCmd        *exec.Cmd
 	source         io.Reader
 	outputCache    []byte
@@ -44,9 +45,22 @@ func newExecReader(ctx context.Context, restartOnClose bool, name string, arg ..
 	return ret, nil
 }
 
+func (e *execReader) restart() {
+	if e.isKill.Load() {
+		return
+	}
+	SLogCLIFromContext(e.ctx).Warn("restarting process")
+	e.isRestart.Store(true)
+	e.doKill(os.Kill)
+}
+
 func (e *execReader) kill(s os.Signal) {
 	SLogCLIFromContext(e.ctx).Warn("killing process")
 	e.isKill.Store(true)
+	e.doKill(s)
+}
+
+func (e *execReader) doKill(s os.Signal) {
 	if e.execCmd != nil {
 		if runtime.GOOS != "windows" {
 			e.execCmd.Process.Signal(s)
@@ -80,7 +94,9 @@ loop:
 			break
 		}
 
-		SLogCLIFromContext(e.ctx).Warn("exec process exited, waiting for exit code...")
+		if !e.isRestart.Load() {
+			SLogCLIFromContext(e.ctx).Warn("exec process exited, waiting for exit code...")
+		}
 
 		// check for exit errors
 		err := e.execCmd.Wait()
@@ -95,7 +111,7 @@ loop:
 					return 0, fmt.Errorf("error executing command: %s (exit code: %d)(stderr: '%s')",
 						ee.Error(), ee.ExitCode(), outputCache)
 				}
-				if e.restartOnClose {
+				if e.restartOnClose && !e.isRestart.Load() {
 					SLogCLIFromContext(e.ctx).Warn("exec process exited, running again...",
 						"error", err.Error(),
 						"exitCode", ee.ExitCode())
@@ -104,10 +120,11 @@ loop:
 				SLogCLIFromContext(e.ctx).Error("error executing command", "error", err.Error())
 			}
 		} else {
-			if e.restartOnClose {
+			if e.restartOnClose && !e.isRestart.Load() {
 				SLogCLIFromContext(e.ctx).Warn("exec process exited, running again...")
 			}
 		}
+		e.isRestart.Store(false)
 		if !e.restartOnClose {
 			break
 		}

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -29,6 +30,7 @@ func New(opt ...Option) *Cmd {
 
 	ret.cmd = &cobra.Command{}
 	ret.cmd.PersistentFlags().Bool("restart", true, "restart on close")
+	ret.cmd.PersistentFlags().IntP("restart-timeout", "r", 0, "restart execution timeout (seconds)")
 
 	executeFunc := func(cmd *cobra.Command, preset string, isExec bool, args []string) error {
 		if opts.processorProvider == nil {
@@ -36,6 +38,10 @@ func New(opt ...Option) *Cmd {
 		}
 
 		restartOnClose, err := cmd.Flags().GetBool("restart")
+		if err != nil {
+			return err
+		}
+		restartTimeoutSec, err := cmd.Flags().GetInt("restart-timeout")
 		if err != nil {
 			return err
 		}
@@ -72,6 +78,15 @@ func New(opt ...Option) *Cmd {
 				return err
 			}
 			source = execHandler
+
+			if restartTimeoutSec > 0 {
+				go func() {
+					t := time.NewTicker(time.Duration(restartTimeoutSec) * time.Second)
+					for range t.C {
+						execHandler.restart()
+					}
+				}()
+			}
 
 			c := make(chan os.Signal)
 			signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
